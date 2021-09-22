@@ -188,7 +188,7 @@ func (ap *GreedyQuadPlugin) Score(
 	score := int64(ap.model.ToInt64Multiplier() * scoreFp)
 	return score, framework.NewStatus(framework.Success, fmt.Sprintf("Node '%s': interim score = %d", nodeName, score))
 	}
-	if len(occupants) == 2{
+	/*if len(occupants) == 2{
 	occ1 := occupants[0]
 	occ2 := occupants[1]
 	scoreFp1, err1 := ap.model.Attack(p, occ1)
@@ -232,7 +232,7 @@ func (ap *GreedyQuadPlugin) Score(
 	scoreFp := scoreFp1 + scoreFp2 + scoreFp3
 	score := int64(ap.model.ToInt64Multiplier() * scoreFp)
 	return score, framework.NewStatus(framework.Success, fmt.Sprintf("Node '%s': interim score = %d", nodeName, score))
-	}
+	} */
 }
 
 // ScoreExtensions returns the GreedyQuadPlugin itself, since it implements the
