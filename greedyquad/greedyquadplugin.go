@@ -59,7 +59,7 @@ func (_ *GreedyQuadPlugin) Name() string {
 //
 // NOTE: For now, the number of the returned Pods should *always* be at most 4;
 // otherwise, there must be some error in our scheduling logic.
-func (_ *GreedyPlugin) findCurrentOccupants(nodeInfo *framework.NodeInfo) []*corev1.Pod {
+func (_ *GreedyQuadPlugin) findCurrentOccupants(nodeInfo *framework.NodeInfo) []*corev1.Pod {
 	ret := make([]*corev1.Pod, 0, 4)
 	for _, podInfo := range nodeInfo.Pods {
 		for key := range podInfo.Pod.Labels {
