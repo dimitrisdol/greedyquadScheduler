@@ -60,7 +60,7 @@ func (_ *GreedyQuadPlugin) Name() string {
 // NOTE: For now, the number of the returned Pods should *always* be at most 4;
 // otherwise, there must be some error in our scheduling logic.
 func (_ *GreedyQuadPlugin) findCurrentOccupants(nodeInfo *framework.NodeInfo) []*corev1.Pod {
-	ret := make([]*corev1.Pod, 0, 4)
+	ret := make([]*corev1.Pod, 0, 2)
 	for _, podInfo := range nodeInfo.Pods {
 		for key := range podInfo.Pod.Labels {
 			if greedyquadLabelKey == key {
@@ -115,11 +115,11 @@ func (ap *GreedyQuadPlugin) Filter(
 	switch len(occupants) {
 	// If the Node is full (i.e., 4 applications tracked by GreedyQuadPlugin are
 	// already scheduled on it), filter it out.
-	case 4:
+	case 2:
 		klog.V(2).Infof("filtering Node %q out because 4 GreedyQuadPlugin applications are already scheduled there", nodeName)
 		return framework.NewStatus(framework.Unschedulable, fmt.Sprintf("Node '%s' already has 4 GreedyPlugin occupants", nodeName))
 	// If the node has 3 applications tracked by GreedyQuadPlugin
-	case 3:
+/*	case 3:
 		occ1 := occupants[0] // the first scheduled Pod
 		occ2 := occupants[1] // the second scheduled Pod
 		occ3 := occupants[2] // the third and final scheduled Pod
@@ -170,6 +170,7 @@ func (ap *GreedyQuadPlugin) Filter(
 		fallthrough
 	// If the existing occupant is slowed down prohibitively much by the
 	// new Pod's attack, filter the Node out.
+	*/
 	case 1:
 		occ := occupants[0] // the single, currently scheduled Pod
 		score, err := ap.model.Attack(pod, occ)
@@ -238,7 +239,7 @@ func (ap *GreedyQuadPlugin) Score(
 	score := int64(ap.model.ToInt64Multiplier() * scoreFp)
 	return score, framework.NewStatus(framework.Success, fmt.Sprintf("Node '%s': interim score = %d", nodeName, score))
 	}
-
+/*
 	if len(occupants) == 2 {
 	occ1 := occupants[0]
 	occ2 := occupants[1]
@@ -285,6 +286,7 @@ func (ap *GreedyQuadPlugin) Score(
 	score := int64(ap.model.ToInt64Multiplier() * scoreFp)
 	return score, framework.NewStatus(framework.Success, fmt.Sprintf("Node '%s': interim score = %d", nodeName, score))
 	}
+	*/
 }
 
 
