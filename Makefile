@@ -4,7 +4,7 @@ VERSION := 0.0.1
 
 DOCKER = docker
 WHO ?= jmmisd
-IMG_BASENAME = greedyquadschedulertest01
+IMG_BASENAME = greedychedulertest01
 LOCAL_IMG := $(WHO)/$(IMG_BASENAME)
 IMG_TAG ?= $(VERSION)
 LOCAL_REGISTRY = localhost:5000

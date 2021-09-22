@@ -4,8 +4,8 @@ import corev1 "k8s.io/api/core/v1"
 
 // InterferenceModel abstracts away the core logic of interference awareness.
 //
-// It is used by GreedyQuadPlugin across various scheduling extension points, and
-// exposes the generalized functionality that should be provided to GreedyQuadPlugin.
+// It is used by GreedyPlugin across various scheduling extension points, and
+// exposes the generalized functionality that should be provided to GreedyPlugin.
 type InterferenceModel interface {
 	// Attack returns a float64 that represents the damage inflicted to the
 	// occupant Pod when the attacker Pod is scheduled along with it.

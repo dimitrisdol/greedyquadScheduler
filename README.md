@@ -1,8 +1,8 @@
-# greedyschedulertest01
+# greedyquadschedulertest01
 
 This is a scheduler out-of-tree plugin in order to greedily asssign different types of applications to server sockets.
 
-It implements the greedy algorithm of matching as many potentially good quadruples before allowing the worst kind of applciations (type 4) to join the servers
+It implements the greedy algorithm of matching as many "good" quadruples between insensitive and passive applications before allowing "bad" fits to happen.
 
 In order to run:
 

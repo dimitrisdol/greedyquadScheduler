@@ -1,4 +1,4 @@
-// Package hardcoded contains an implementation of greedyquad.dInterferenceModel,
+// Package hardcoded contains an implementation of greedyquad.InterferenceModel,
 // where the slowdowns among all applications are known and hardcoded.
 package hardcoded
 
@@ -21,7 +21,7 @@ type HardcodedSlowDowns struct {
 }
 
 // New returns a new HardcodedSlowDowns with the given label key (the one that
-// is used by GreedyquadPlugin to track its applications).
+// is used by GreedyQuadPlugin to track its applications).
 func New(greedyquadLabelKey string) *HardcodedSlowDowns {
 	return &HardcodedSlowDowns{
 		greedyquadLabelKey: greedyquadLabelKey,
@@ -120,7 +120,7 @@ func (ac appCategory) attack(occupant appCategory) float64 {
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-// slowDownMatrix is a type alias for internal use in GreedyPlugin.
+// slowDownMatrix is a type alias for internal use in GreedyQuadPlugin.
 type slowDownMatrix map[appCategory]map[appCategory]float64
 
 // slowDowns is a hardcoded global map that represents a dense 2D matrix of the
