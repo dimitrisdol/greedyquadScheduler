@@ -177,7 +177,7 @@ func (ap *GreedyQuadPlugin) Score(
 	}
 
 	// Otherwise, evaluate the slowdown
-	if len(occupants) == 1{
+	//if len(occupants) == 1{
 	occ := occupants[0]
 	scoreFp, err := ap.model.Attack(p, occ)
 	if err != nil {
@@ -187,7 +187,7 @@ func (ap *GreedyQuadPlugin) Score(
 	}
 	score := int64(ap.model.ToInt64Multiplier() * scoreFp)
 	return score, framework.NewStatus(framework.Success, fmt.Sprintf("Node '%s': interim score = %d", nodeName, score))
-	}
+	//}
 	/*if len(occupants) == 2{
 	occ1 := occupants[0]
 	occ2 := occupants[1]
