@@ -19,7 +19,7 @@ const (
 
 	// sla is the maximum slowdown that is allowed for an application when
 	// it is being scheduled along another one.
-	sla = 10
+	sla = 20
 
 	// greedyquadLabelKey is the key of the Kubernetes Label which every
 	// application that needs to be tracked by GreedyPlugin should have.
@@ -113,7 +113,7 @@ func (ap *GreedyQuadPlugin) Filter(
 
 	// Decide on how to proceed based on the number of current occupants
 	switch len(occupants) {
-	// If the Node is full (i.e., 2 applications tracked by GreedyQuadPlugin are
+	// If the Node is full (i.e., 4 applications tracked by GreedyQuadPlugin are
 	// already scheduled on it), filter it out.
 	case 4:
 		klog.V(2).Infof("filtering Node %q out because 4 GreedyQuadPlugin applications are already scheduled there", nodeName)
@@ -144,7 +144,7 @@ func (ap *GreedyQuadPlugin) Filter(
 		}
 		if score > sla {
 			msg := fmt.Sprintf("filtering Node '%s': new Pod '%s/%s' ('%s') incurs huge slowdown on Pod '%s/%s' ('%s')"),
-				node.Name, pod.Namespace, pod.Name, pod.Labels[greedyquadLabelKey], occ1.Namespace, occ1.Name, occ1.Labels[greedyquadLabelKey])
+				node.Name, pod.Namespace, pod.Name, pod.Labels[greedyquadLabelKey])
 				klog.V(2).Infof(msg)
 				return framework.NewStatus(framework.Unschedulable, msg)
 		}
@@ -163,7 +163,7 @@ func (ap *GreedyQuadPlugin) Filter(
 		}
 		if score> sla {
 			msg := fmt.Sprintf("filtering Node '%s':new pod '%s/%s' ('%s') incurs huge slowdown on pod '%s/%s' ('%s')",
-				nodeName, pod.Namespace, pod.Name, pod.Labels9greedyquadLabelKey], occ1.Namespace, occ1.Name, occ1.Labels[greedyquadLabelKey])
+				nodeName, pod.Namespace, pod.Name, pod.Labels[greedyquadLabelKey])
 			klog.V(2).Infof(msg)
 			return framework.NewStatus(framework.Unschedulable, msg)
 		}
