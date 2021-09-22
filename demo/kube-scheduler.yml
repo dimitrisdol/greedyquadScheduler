@@ -14,12 +14,12 @@ spec:
     - --v=3
     - --authentication-kubeconfig=/etc/kubernetes/scheduler.conf
     - --authorization-kubeconfig=/etc/kubernetes/scheduler.conf
-    - --config=/etc/kubernetes/greedy-config.yml
+    - --config=/etc/kubernetes/greedyquad-config.yml
     - --bind-address=127.0.0.1
     - --kubeconfig=/etc/kubernetes/scheduler.conf
     - --leader-elect=true
     - --port=0
-    image: jmmisd/greedychedulertest01:0.0.1
+    image: jmmisd/greedyquadschedulertest01:0.0.1
     imagePullPolicy: Always
     livenessProbe:
       failureThreshold: 8
@@ -49,8 +49,8 @@ spec:
     - mountPath: /etc/kubernetes/scheduler.conf
       name: kubeconfig
       readOnly: true
-    - mountPath: /etc/kubernetes/greedy-config.yml
-      name: greedy-config
+    - mountPath: /etc/kubernetes/greedyquad-config.yml
+      name: greedyquad-config
       readOnly: true
   hostNetwork: true
   priorityClassName: system-node-critical
@@ -60,7 +60,7 @@ spec:
       type: FileOrCreate
     name: kubeconfig
   - hostPath:
-      path: /etc/kubernetes/greedy-config.yml
+      path: /etc/kubernetes/greedyquad-config.yml
       type: File
-    name: greedy-config
+    name: greedyquad-config
 status: {}

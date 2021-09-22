@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/dimitrisdol/greedyScheduler/greedy"
+	"github.com/dimitrisdol/greedyquadScheduler/greedyquad"
 
 	"k8s.io/klog/v2"
 	sched "k8s.io/kubernetes/cmd/kube-scheduler/app"
@@ -9,9 +9,9 @@ import (
 
 func main() {
 	cmd := sched.NewSchedulerCommand(
-		sched.WithPlugin(greedy.Name, greedy.New),
+		sched.WithPlugin(greedyquad.Name, greedyquad.New),
 	)
 	if err := cmd.Execute(); err != nil {
-		klog.Fatalf("failed to execute %q: %v", greedy.Name, err)
+		klog.Fatalf("failed to execute %q: %v", greedyquad.Name, err)
 	}
 }

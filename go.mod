@@ -1,4 +1,4 @@
-module github.com/dimitrisdol/greedyScheduler
+module github.com/dimitrisdol/greedyquadScheduler
 
 go 1.16
 

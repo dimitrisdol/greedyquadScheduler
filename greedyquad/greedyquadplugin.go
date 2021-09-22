@@ -1,12 +1,12 @@
 // Package greedy contains an out-of-tree plugin based on the Kubernetes
 // scheduling framework.
-package greedy
+package greedyquad
 
 import (
 	"context"
 	"fmt"
 
-	"github.com/dimitrisdol/greedyScheduler/greedy/hardcoded"
+	"github.com/dimitrisdol/greedyquadScheduler/greedyquad/hardcoded"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/klog/v2"
@@ -15,55 +15,55 @@ import (
 
 const (
 	// Name is the "official" external name of this scheduling plugin.
-	Name = "GreedyPlugin"
+	Name = "GreedyQuadPlugin"
 
 	// sla is the maximum slowdown that is allowed for an application when
 	// it is being scheduled along another one.
-	sla = 1.5
+	sla = 10
 
-	// greedyLabelKey is the key of the Kubernetes Label which every
+	// greedyquadLabelKey is the key of the Kubernetes Label which every
 	// application that needs to be tracked by GreedyPlugin should have.
-	greedyLabelKey = "greedy"
+	greedyquadLabelKey = "greedyquad"
 )
 
-// GreedyPlugin is an out-of-tree plugin for the kube-scheduler, which takes into
+// GreedyQuadPlugin is an out-of-tree plugin for the kube-scheduler, which takes into
 // account information about the slowdown of colocated applications when they
 // are wrapped into Pods and scheduled on the Kubernetes cluster.
-type GreedyPlugin struct {
+type GreedyQuadPlugin struct {
 	handle framework.Handle
 	model  InterferenceModel
 }
 
 var (
-	_ framework.Plugin          = &GreedyPlugin{}
-	_ framework.FilterPlugin    = &GreedyPlugin{}
-	_ framework.ScorePlugin     = &GreedyPlugin{}
-	_ framework.ScoreExtensions = &GreedyPlugin{}
+	_ framework.Plugin          = &GreedyQuadPlugin{}
+	_ framework.FilterPlugin    = &GreedyQuadPlugin{}
+	_ framework.ScorePlugin     = &GreedyQuadPlugin{}
+	_ framework.ScoreExtensions = &GreedyQuadPlugin{}
 )
 
-// New instantiates a GreedyPlugin.
+// New instantiates a GreedyQuadPlugin.
 func New(configuration runtime.Object, f framework.Handle) (framework.Plugin, error) {
-	return &GreedyPlugin{
+	return &GreedyQuadPlugin{
 		handle: f,
-		model:  hardcoded.New(greedyLabelKey),
+		model:  hardcoded.New(greedyquadLabelKey),
 	}, nil
 }
 
-// Name returns the official name of the GreedyPlugin.
-func (_ *GreedyPlugin) Name() string {
+// Name returns the official name of the GreedyQuadPlugin.
+func (_ *GreedyQuadPlugin) Name() string {
 	return Name
 }
 
-// findCurrentOccupants returns all Pods that are being tracked by GreedyPlugin
+// findCurrentOccupants returns all Pods that are being tracked by GreedyQuadPlugin
 // and are already scheduled on the Node represented by the given NodeInfo.
 //
-// NOTE: For now, the number of the returned Pods should *always* be at most 2;
+// NOTE: For now, the number of the returned Pods should *always* be at most 4;
 // otherwise, there must be some error in our scheduling logic.
 func (_ *GreedyPlugin) findCurrentOccupants(nodeInfo *framework.NodeInfo) []*corev1.Pod {
-	ret := make([]*corev1.Pod, 0, 2)
+	ret := make([]*corev1.Pod, 0, 4)
 	for _, podInfo := range nodeInfo.Pods {
 		for key := range podInfo.Pod.Labels {
-			if greedyLabelKey == key {
+			if greedyquadLabelKey == key {
 				ret = append(ret, podInfo.Pod)
 			}
 		}
@@ -85,7 +85,7 @@ func (_ *GreedyPlugin) findCurrentOccupants(nodeInfo *framework.NodeInfo) []*cor
 // For example, during preemption, we may pass a copy of the original
 // nodeInfo object that has some pods removed from it to evaluate the
 // possibility of preempting them to schedule the target pod.
-func (ap *GreedyPlugin) Filter(
+func (ap *GreedyQuadPlugin) Filter(
 	ctx context.Context,
 	state *framework.CycleState,
 	pod *corev1.Pod,
@@ -99,25 +99,75 @@ func (ap *GreedyPlugin) Filter(
 	}
 	nodeName := nodeInfo.Node().Name
 
-	// If the given Pod does not have the greedyLabelKey, approve it and let
+	// If the given Pod does not have the greedyquadLabelKey, approve it and let
 	// the other plugins decide for its fate.
-	if _, exists := pod.Labels[greedyLabelKey]; !exists {
-		klog.V(2).Infof("blindly approving Pod '%s/%s' as it does not have GreedyPlugin's label %q", pod.Namespace, pod.Name, greedyLabelKey)
-		return framework.NewStatus(framework.Success, "pod is not tracked by GreedyPlugin")
+	if _, exists := pod.Labels[greedyquadLabelKey]; !exists {
+		klog.V(2).Infof("blindly approving Pod '%s/%s' as it does not have GreedyQuadPlugin's label %q", pod.Namespace, pod.Name, greedyquadLabelKey)
+		return framework.NewStatus(framework.Success, "pod is not tracked by GreedyQuadPlugin")
 	}
 
 	// For the Node at hand, find all occupant Pods tracked by GreedyPlugin.
-	// These should *always* be fewer than or equal to 2, but we take the
+	// These should *always* be fewer than or equal to 4, but we take the
 	// opportunity to assert this invariant later anyway.
 	occupants := ap.findCurrentOccupants(nodeInfo)
 
 	// Decide on how to proceed based on the number of current occupants
 	switch len(occupants) {
-	// If the Node is full (i.e., 2 applications tracked by GreedyPlugin are
+	// If the Node is full (i.e., 2 applications tracked by GreedyQuadPlugin are
 	// already scheduled on it), filter it out.
+	case 4:
+		klog.V(2).Infof("filtering Node %q out because 4 GreedyQuadPlugin applications are already scheduled there", nodeName)
+		return framework.NewStatus(framework.Unschedulable, fmt.Sprintf("Node '%s' already has 4 GreedyPlugin occupants", nodeName))
+	// If the node has 3 applications tracked by GreedyQuadPlugin
+	case 3:
+		occ1 := occupants[0] // the first scheduled Pod
+		occ2 := occupants[1] // the second scheduled Pod
+		occ3 := occupants[2] // the third and final scheduled Pod
+		score1, err1 := ap.model.Attack(pod, occ1)
+		score2, err2 := ap.model.Attack(pod, occ2)
+		score3, err3 := ap.model.Attack(pod, occ3)
+		score = score1 + score2 + score3
+		if err1 != nil {
+			err1 = fmt.Errorf("new Pod '%s/%s' on Node '%s' : %v", occ1.Namespace, occ1.Name, nodeName, err1)
+			klog.Warning(err1)
+			return framework.NewStatus(framework.Error, err1.Error())
+		}
+		if err2 != nil {
+			err2 = fmt.Errorf("new Pod '%s/%s' on Node '%s' : %v", occ2.Namespace, occ2.Name, nodeName, err2)
+			klog.Warning(err2)
+			return framework.NewStatus(framework.Error, err2.Error())
+		}
+		if err3 != nul {
+			err3 = fmt.Errorf("new Pod '%s/%s' on Node '%s' : %v", occ3.Namespace, occ3.Name, nodeName, err3)
+			klog.Warning(err3)
+			return framework.NewStatus(framework.Error, err3.Error())
+		}
+		if score > sla {
+			msg := fmt.Sprintf("filtering Node '%s': new Pod '%s/%s' ('%s') incurs huge slowdown on Pod '%s/%s' ('%s')"),
+				node.Name, pod.Namespace, pod.Name, pod.Labels[greedyquadLabelKey], occ1.Namespace, occ1.Name, occ1.Labels[greedyquadLabelKey])
+				klog.V(2).Infof(msg)
+				return framework.NewStatus(framework.Unschedulable, msg)
+		}
+		fallthrough
+	// If the node has 2 applications tracked by GreedyQuadPlugin
 	case 2:
-		klog.V(2).Infof("filtering Node %q out because 2 GreedyPlugin applications are already scheduled there", nodeName)
-		return framework.NewStatus(framework.Unschedulable, fmt.Sprintf("Node '%s' already has 2 GreedyPlugin occupants", nodeName))
+		occ1 := occupants[0] // the first scheduled Pod
+		occ2 := occupants[1] // the second Pod
+		score1, err1 := ap.model.Attack(pod, occ1)
+		score2, err2 := ap.model.Attack(pod, occ2)
+		score = score1 + score2
+		if err1 != nil {
+			err1 = fmt.Errorf("new Pod '%s/%s' on Node '%s': %v", occ1.Namespace, occ1.Name, nodeName, err1)
+			klog.Warning(err1)
+			return framework.NewStatus(framework.Error, err1.Error())
+		}
+		if score> sla {
+			msg := fmt.Sprintf("filtering Node '%s':new pod '%s/%s' ('%s') incurs huge slowdown on pod '%s/%s' ('%s')",
+				nodeName, pod.Namespace, pod.Name, pod.Labels9greedyquadLabelKey], occ1.Namespace, occ1.Name, occ1.Labels[greedyquadLabelKey])
+			klog.V(2).Infof(msg)
+			return framework.NewStatus(framework.Unschedulable, msg)
+		}
+		fallthrough
 	// If the existing occupant is slowed down prohibitively much by the
 	// new Pod's attack, filter the Node out.
 	case 1:
@@ -130,7 +180,7 @@ func (ap *GreedyPlugin) Filter(
 		}
 		if score > sla {
 			msg := fmt.Sprintf("filtering Node '%s': new pod '%s/%s' ('%s') incurs huge slowdown on pod '%s/%s' ('%s')",
-				nodeName, pod.Namespace, pod.Name, pod.Labels[greedyLabelKey], occ.Namespace, occ.Name, occ.Labels[greedyLabelKey])
+				nodeName, pod.Namespace, pod.Name, pod.Labels[greedyquadLabelKey], occ.Namespace, occ.Name, occ.Labels[greedyquadLabelKey])
 			klog.V(2).Infof(msg)
 			return framework.NewStatus(framework.Unschedulable, msg)
 		}
@@ -143,7 +193,7 @@ func (ap *GreedyPlugin) Filter(
 	// If more than 2 occupants are found to be already scheduled on the
 	// Node at hand, we must have fucked up earlier; report the error.
 	default:
-		klog.Errorf("detected %d occupant Pods tracked by ActiPlugin on Node %q", len(occupants), nodeName)
+		klog.Errorf("detected %d occupant Pods tracked by GreedyQuadPlugin on Node %q", len(occupants), nodeName)
 		return framework.NewStatus(framework.Error, fmt.Sprintf("found %d occupants on '%s' already", len(occupants), nodeName))
 	}
 }
@@ -155,7 +205,7 @@ func (ap *GreedyPlugin) Filter(
 // In the case of GreedyPlugin, scoring is reversed; i.e., higher score indicates
 // worse scheduling decision.
 // This is taken into account and "fixed" later, during the normalization.
-func (ap *GreedyPlugin) Score(
+func (ap *GreedyQuadPlugin) Score(
 	ctx context.Context,
 	state *framework.CycleState,
 	p *corev1.Pod,
@@ -177,6 +227,7 @@ func (ap *GreedyPlugin) Score(
 	}
 
 	// Otherwise, evaluate the slowdown
+	if len(occupants) == 1 {
 	occ := occupants[0]
 	scoreFp, err := ap.model.Attack(p, occ)
 	if err != nil {
@@ -186,11 +237,60 @@ func (ap *GreedyPlugin) Score(
 	}
 	score := int64(ap.model.ToInt64Multiplier() * scoreFp)
 	return score, framework.NewStatus(framework.Success, fmt.Sprintf("Node '%s': interim score = %d", nodeName, score))
+	}
+
+	if len(occupants) == 2 {
+	occ1 := occupants[0]
+	occ2 := occupants[1]
+	scoreFp1, err1 := ap.model.Attack(p, occ1)
+	if err1 != nul {
+		err1 = fmt.Errorf("new Pod '%s/%s' on Node '%s': %v", occ1.Namespace, occ1.Name, nodeName, err1)
+		klog.Warning(err1)
+		return -1, framework.NewStatus(framework.Error, err1.Error())
+	}
+	scoreFp2, err2 := ap.model.Attack(p, occ2)
+	if err2 != nil {
+		err2 = fmt.Errorf("new Pod '%s/%s' on Node '%s': %v", occ2.Namespace, occ2.Name, nodeName, err2)
+		klog.Warning(err2)
+		return -1, framework.NewStatus(framework.Error, err2.Error())
+	}
+	scoreFp = scoreFp1 + scoreFp2
+	score := int64(ap.model.ToInt64Multiplier() * scoreFp)
+	return score, framework.NewStatus(framework.Success, fmt.Sprintf("Node '%s': interim score = %d", nodeName, score))
+	}
+
+	if len(occupants) == 3 {
+	occ1 := occupants[0]
+	occ2 := occupants[1]
+	occ3 := occupants[2]
+	scoreFp1, err1 := ap.model.Attack(p, occ1)
+	if err1 != nul {
+		err1 = fmt.Errorf("new Pod '%s/%s' on Node '%s': %v", occ1.Namespace, occ1.Name, nodeName, err1)
+		klog.Warning(err1)
+		return -1, framework.NewStatus(framework.Error, err1.Error())
+	}
+	scoreFp2, err2 := ap.model.Attack(p, occ2)
+	if err2 != nil {
+		err2 = fmt.Errorf("new Pod '%s/%s' on Node '%s': %v", occ2.Namespace, occ2.Name, nodeName, err2)
+		klog.Warning(err2)
+		return -1, framework.NewStatus(framework.Error, err2.Error())
+	}
+	scoreFp3, err3 := ap.model.Attack(p, occ3)
+	if err3 != nul {
+		err3 = fmt.Errorf("new Pod '%s/%s' on Node '%s': %v", occ3.Namespace, occ3.Name, nodeName, err3)
+		klog.Warning(err3)
+		return -1, framework.NewStatus(framework.Error, err3.Error())
+	}
+	scoreFp = scoreFp1 + scoreFp2 + scoreFp3
+	score := int64(ap.model.ToInt64Multiplier() * scoreFp)
+	return score, framework.NewStatus(framework.Success, fmt.Sprintf("Node '%s': interim score = %d", nodeName, score))
+	}
 }
 
-// ScoreExtensions returns the GreedyPlugin itself, since it implements the
+
+// ScoreExtensions returns the GreedyQuadPlugin itself, since it implements the
 // framework.ScoreExtensions interface.
-func (ap *GreedyPlugin) ScoreExtensions() framework.ScoreExtensions {
+func (ap *GreedyQuadPlugin) ScoreExtensions() framework.ScoreExtensions {
 	return ap
 }
 
@@ -198,11 +298,11 @@ func (ap *GreedyPlugin) ScoreExtensions() framework.ScoreExtensions {
 // "Score" method. A successful run of NormalizeScore will update the scores
 // list and return a success status.
 //
-// In the case of the GreedyPlugin, its "Score" method produces scores of reverse
+// In the case of the GreedyQuadPlugin, its "Score" method produces scores of reverse
 // priority (i.e., the lower the score, the better the result). Therefore all
 // scores have to be reversed during the normalization, so that higher score
 // indicates a better scheduling result in terms of slowdowns.
-func (_ *GreedyPlugin) NormalizeScore(
+func (_ *GreedyQuadPlugin) NormalizeScore(
 	ctx context.Context,
 	state *framework.CycleState,
 	p *corev1.Pod,

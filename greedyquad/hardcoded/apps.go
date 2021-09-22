@@ -1,4 +1,4 @@
-// Package hardcoded contains an implementation of greedy.InterferenceModel,
+// Package hardcoded contains an implementation of greedyquad.dInterferenceModel,
 // where the slowdowns among all applications are known and hardcoded.
 package hardcoded
 
@@ -14,27 +14,27 @@ import (
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-// HardcodedSlowDowns is an implementation of greedy.InterferenceModel, where the
+// HardcodedSlowDowns is an implementation of greedyquad.InterferenceModel, where the
 // slowdowns among all applications are known and hardcoded.
 type HardcodedSlowDowns struct {
-	greedyLabelKey string
+	greedyquadLabelKey string
 }
 
 // New returns a new HardcodedSlowDowns with the given label key (the one that
-// is used by GreedyPlugin to track its applications).
-func New(greedyLabelKey string) *HardcodedSlowDowns {
+// is used by GreedyquadPlugin to track its applications).
+func New(greedyquadLabelKey string) *HardcodedSlowDowns {
 	return &HardcodedSlowDowns{
-		greedyLabelKey: greedyLabelKey,
+		greedyquadLabelKey: greedyquadLabelKey,
 	}
 }
 
-// Attack implements greedy.InterferenceModel; see the documentation there for
+// Attack implements greedyquad.InterferenceModel; see the documentation there for
 // more information.
 func (m *HardcodedSlowDowns) Attack(attacker, occupant *corev1.Pod) (float64, error) {
-	occPodCategory, _ := parseAppCategory(occupant.Labels[m.greedyLabelKey])
+	occPodCategory, _ := parseAppCategory(occupant.Labels[m.greedyquadLabelKey])
 	//  occupant   ^^^   Pod's label's value must have been
 	// validated back when it was first scheduled on the Node
-	newPodCategory, err := parseAppCategory(attacker.Labels[m.greedyLabelKey])
+	newPodCategory, err := parseAppCategory(attacker.Labels[m.greedyquadLabelKey])
 	if err != nil {
 		return -1, err
 	}
@@ -43,7 +43,7 @@ func (m *HardcodedSlowDowns) Attack(attacker, occupant *corev1.Pod) (float64, er
 
 const toInt64Multiplier = 100.
 
-// ToInt64Multiplier implements greedy.InterferenceModel; see the documentation
+// ToInt64Multiplier implements greedyquad.InterferenceModel; see the documentation
 // there for more information.
 func (_ *HardcodedSlowDowns) ToInt64Multiplier() float64 {
 	return toInt64Multiplier
@@ -56,7 +56,7 @@ func (_ *HardcodedSlowDowns) ToInt64Multiplier() float64 {
 ///////////////////////////////////////////////////////////////////////////////
 
 // appCategory is an enumeration of known application categories.
-// the 4 appCategories that are to be examined by the GreedyPlugin are as
+// the 4 appCategories that are to be examined by the GreedyQuadPlugin are as
 // follows:
 //  catA : insensitive and peaceful applications, considered the best for the
 //         plugin
