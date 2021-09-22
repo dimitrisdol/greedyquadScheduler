@@ -19,7 +19,7 @@ const (
 
 	// sla is the maximum slowdown that is allowed for an application when
 	// it is being scheduled along another one.
-	sla = 1.5
+	sla = 10
 
 	// greedyquadLabelKey is the key of the Kubernetes Label which every
 	// application that needs to be tracked by GreedyQuadPlugin should have.
@@ -60,7 +60,7 @@ func (_ *GreedyQuadPlugin) Name() string {
 // NOTE: For now, the number of the returned Pods should *always* be at most 2;
 // otherwise, there must be some error in our scheduling logic.
 func (_ *GreedyQuadPlugin) findCurrentOccupants(nodeInfo *framework.NodeInfo) []*corev1.Pod {
-	ret := make([]*corev1.Pod, 0, 2)
+	ret := make([]*corev1.Pod, 0, 4)
 	for _, podInfo := range nodeInfo.Pods {
 		for key := range podInfo.Pod.Labels {
 			if greedyquadLabelKey == key {
@@ -115,7 +115,7 @@ func (ap *GreedyQuadPlugin) Filter(
 	switch len(occupants) {
 	// If the Node is full (i.e., 2 applications tracked by GreedyQuadPlugin are
 	// already scheduled on it), filter it out.
-	case 2:
+	case 4:
 		klog.V(2).Infof("filtering Node %q out because 2 GreedyQuadPlugin applications are already scheduled there", nodeName)
 		return framework.NewStatus(framework.Unschedulable, fmt.Sprintf("Node '%s' already has 2 GreedyQuadPlugin occupants", nodeName))
 	// If the existing occupant is slowed down prohibitively much by the
