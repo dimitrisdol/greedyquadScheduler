@@ -126,7 +126,7 @@ func (ap *GreedyQuadPlugin) Filter(
 		score1, err1 := ap.model.Attack(pod, occ1)
 		score2, err2 := ap.model.Attack(pod, occ2)
 		score3, err3 := ap.model.Attack(pod, occ3)
-		score = score1 + score2 + score3
+		score := score1 + score2 + score3
 		if err1 != nil {
 			err1 = fmt.Errorf("new Pod '%s/%s' on Node '%s' : %v", occ1.Namespace, occ1.Name, nodeName, err1)
 			klog.Warning(err1)
@@ -155,7 +155,7 @@ func (ap *GreedyQuadPlugin) Filter(
 		occ2 := occupants[1] // the second Pod
 		score1, err1 := ap.model.Attack(pod, occ1)
 		score2, err2 := ap.model.Attack(pod, occ2)
-		score = score1 + score2
+		score := score1 + score2
 		if err1 != nil {
 			err1 = fmt.Errorf("new Pod '%s/%s' on Node '%s': %v", occ1.Namespace, occ1.Name, nodeName, err1)
 			klog.Warning(err1)
@@ -254,7 +254,7 @@ func (ap *GreedyQuadPlugin) Score(
 		klog.Warning(err2)
 		return -1, framework.NewStatus(framework.Error, err2.Error())
 	}
-	scoreFp = scoreFp1 + scoreFp2
+	scoreFp := scoreFp1 + scoreFp2
 	score := int64(ap.model.ToInt64Multiplier() * scoreFp)
 	return score, framework.NewStatus(framework.Success, fmt.Sprintf("Node '%s': interim score = %d", nodeName, score))
 	}
@@ -281,7 +281,7 @@ func (ap *GreedyQuadPlugin) Score(
 		klog.Warning(err3)
 		return -1, framework.NewStatus(framework.Error, err3.Error())
 	}
-	scoreFp = scoreFp1 + scoreFp2 + scoreFp3
+	scoreFp := scoreFp1 + scoreFp2 + scoreFp3
 	score := int64(ap.model.ToInt64Multiplier() * scoreFp)
 	return score, framework.NewStatus(framework.Success, fmt.Sprintf("Node '%s': interim score = %d", nodeName, score))
 	}
