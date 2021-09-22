@@ -19,7 +19,7 @@ const (
 
 	// sla is the maximum slowdown that is allowed for an application when
 	// it is being scheduled along another one.
-	sla = 10
+	sla = 30
 
 	// greedyquadLabelKey is the key of the Kubernetes Label which every
 	// application that needs to be tracked by GreedyQuadPlugin should have.
@@ -177,6 +177,7 @@ func (ap *GreedyQuadPlugin) Score(
 	}
 
 	// Otherwise, evaluate the slowdown
+	if len(occupants) == 1{
 	occ := occupants[0]
 	scoreFp, err := ap.model.Attack(p, occ)
 	if err != nil {
@@ -186,6 +187,52 @@ func (ap *GreedyQuadPlugin) Score(
 	}
 	score := int64(ap.model.ToInt64Multiplier() * scoreFp)
 	return score, framework.NewStatus(framework.Success, fmt.Sprintf("Node '%s': interim score = %d", nodeName, score))
+	}
+	if len(occupants) == 2{
+	occ1 := occupants[0]
+	occ2 := occupants[1]
+	scoreFp1, err1 := ap.model.Attack(p, occ1)
+	if err1 != nil {
+		err1 = fmt.Errorf("new Pod '%s/%s' on Node '%s': %v", occ1.Namespace, occ1.Name, nodeName, err1)
+		klog.Warning(err1)
+		return -1, framework.NewStatus(framework.Error, err1.Error())
+	}
+	scoreFp2, err2 := ap.model.Attack(p, occ2)
+	if err2 != nil {
+		err2 = fmt.Errorf("new Pod '%s/%s' on Node '%s': %v", occ2.Namespace, occ2.Name, nodeName, err2)
+		klog.Warning(err2)
+		return -1, framework.NewStatus(framework.Error, err2.Error())
+	}
+	scoreFp := scoreFp1 + scoreFp2
+	score := int64(ap.model.ToInt64Multiplier() * scoreFp)
+	return score, framework.NewStatus(framework.Success, fmt.Sprintf("Node '%s': interim score = %d", nodeName, score))
+	}
+	if len(occupants) == 3{
+	occ1 := occupants[0]
+	occ2 := occupants[1]
+	occ3 := occupants[2]
+	scoreFp1, err1 := ap.model.Attack(p, occ1)
+	if err1 != nil {
+		err1 = fmt.Errorf("new Pod '%s/%s' on Node '%s': %v", occ1.Namespace, occ1.Name, nodeName, err1)
+		klog.Warning(err1)
+		return -1, framework.NewStatus(framework.Error, err1.Error())
+	}
+	scoreFp2, err2 := ap.model.Attack(p, occ2)
+	if err2 != nil {
+		err2 = fmt.Errorf("new Pod '%s/%s' on Node '%s': %v", occ2.Namespace, occ2.Name, nodeName, err2)
+		klog.Warning(err2)
+		return -1, framework.NewStatus(framework.Error, err2.Error())
+	}
+	scoreFp3, err3 := ap.model.Attack(p, occ3)
+	if err3 != nil {
+		err3 = fmt.Errorf("new Pod '%s/%s' on Node '%s': %v", occ3.Namespace, occ3.Name, nodeName, err3)
+		klog.Warning(err3)
+		return -1, framework.NewStatus(framework.Error, err3.Error())
+	}
+	scoreFp := scoreFp1 + scoreFp2 + scoreFp3
+	score := int64(ap.model.ToInt64Multiplier() * scoreFp)
+	return score, framework.NewStatus(framework.Success, fmt.Sprintf("Node '%s': interim score = %d", nodeName, score))
+	}
 }
 
 // ScoreExtensions returns the GreedyQuadPlugin itself, since it implements the
