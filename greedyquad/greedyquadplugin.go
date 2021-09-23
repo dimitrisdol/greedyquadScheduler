@@ -57,7 +57,7 @@ func (_ *GreedyQuadPlugin) Name() string {
 // findCurrentOccupants returns all Pods that are being tracked by GreedyQuadPlugin
 // and are already scheduled on the Node represented by the given NodeInfo.
 //
-// NOTE: For now, the number of the returned Pods should *always* be at most 2;
+// NOTE: For now, the number of the returned Pods should *always* be at most 4;
 // otherwise, there must be some error in our scheduling logic.
 func (_ *GreedyQuadPlugin) findCurrentOccupants(nodeInfo *framework.NodeInfo) []*corev1.Pod {
 	ret := make([]*corev1.Pod, 0, 4)
@@ -107,45 +107,69 @@ func (ap *GreedyQuadPlugin) Filter(
 	}
 
 	// For the Node at hand, find all occupant Pods tracked by GreedyQuadPlugin.
-	// These should *always* be fewer than or equal to 2, but we take the
+	// These should *always* be fewer than or equal to 4, but we take the
 	// opportunity to assert this invariant later anyway.
 	occupants := ap.findCurrentOccupants(nodeInfo)
 
 	// Decide on how to proceed based on the number of current occupants
 	switch len(occupants) {
-	// If the Node is full (i.e., 2 applications tracked by GreedyQuadPlugin are
+	// If the Node is full (i.e., 4 applications tracked by GreedyQuadPlugin are
 	// already scheduled on it), filter it out.
 	case 4:
 		klog.V(2).Infof("filtering Node %q out because 2 GreedyQuadPlugin applications are already scheduled there", nodeName)
 		return framework.NewStatus(framework.Unschedulable, fmt.Sprintf("Node '%s' already has 2 GreedyQuadPlugin occupants", nodeName))
 	// If the existing occupant is slowed down prohibitively much by the
 	// new Pod's attack, filter the Node out.
+	// Now cheking the cases of 1, 2 and 3 pods already being in the Node.
 	case 3:
-		occ := occupants[0] // the single, currently scheduled Pod
-		score, err := ap.model.Attack(pod, occ)
-		if err != nil {
-			err = fmt.Errorf("new Pod '%s/%s' on Node '%s': %v", occ.Namespace, occ.Name, nodeName, err)
-			klog.Warning(err)
-			return framework.NewStatus(framework.Error, err.Error())
+		occ1 := occupants[0] // the first, currently scheduled Pod
+		occ2 := occupants[1] // second Pod
+		occ3 := occupants[2] // third one 
+		score1, err1 := ap.model.Attack(pod, occ1)
+		if err1 != nil {
+			err1 = fmt.Errorf("new Pod '%s/%s' on Node '%s': %v", occ1.Namespace, occ1.Name, nodeName, err1)
+			klog.Warning(err1)
+			return framework.NewStatus(framework.Error, err1.Error())
 		}
+		score2, err2 := ap.model.Attack(pod, occ2)
+		if err2 != nil {
+			err2 = fmt.Errorf("new Pod '%s/%s' on Node '%s': %v", occ2.Namespace, occ2.Name, nodeName, err2)
+			klog.Warning(err2)
+			return framework.NewStatus(framework.Error, err2.Error())
+		}
+		score3, err3 := ap.model.Attack(pod, occ3)
+		if err3 != nil {
+			err3 = fmt.Errorf("new Pod '%s/%s' on Node '%s': %v", occ3.Namespace, occ3.Name, nodeName, err3)
+			klog.Warning(err3)
+			return framework.NewStatus(framework.Error, err3.Error())
+		}
+		score := score1 + score2 + score3
 		if score > sla {
 			msg := fmt.Sprintf("filtering Node '%s': new pod '%s/%s' ('%s') incurs huge slowdown on pod '%s/%s' ('%s')",
-				nodeName, pod.Namespace, pod.Name, pod.Labels[greedyquadLabelKey], occ.Namespace, occ.Name, occ.Labels[greedyquadLabelKey])
+				nodeName, pod.Namespace, pod.Name, pod.Labels[greedyquadLabelKey],)
 			klog.V(2).Infof(msg)
 			return framework.NewStatus(framework.Unschedulable, msg)
 		}
 		fallthrough
 	case 2:
-		occ := occupants[0] // the single, currently scheduled Pod
-		score, err := ap.model.Attack(pod, occ)
-		if err != nil {
-			err = fmt.Errorf("new Pod '%s/%s' on Node '%s': %v", occ.Namespace, occ.Name, nodeName, err)
-			klog.Warning(err)
-			return framework.NewStatus(framework.Error, err.Error())
+		occ1 := occupants[0] // the first scheduled Pod
+		occ2 := occupants[1] // second one
+		score1, err1 := ap.model.Attack(pod, occ1)
+		if err1 != nil {
+			err1 = fmt.Errorf("new Pod '%s/%s' on Node '%s': %v", occ1.Namespace, occ1.Name, nodeName, err1)
+			klog.Warning(err1)
+			return framework.NewStatus(framework.Error, err1.Error())
 		}
+		score2, err2 := ap.model.Attack(pod, occ2)
+		if err2 != nil {
+			err2 = fmt.Errorf("new Pod '%s/%s' on Node '%s': %v", occ2.Namespace, occ2.Name, nodeName, err2)
+			klog.Warning(err2)
+			return framework.NewStatus(framework.Error, err2.Error())
+		}
+		score := score1 + score2
 		if score > sla {
 			msg := fmt.Sprintf("filtering Node '%s': new pod '%s/%s' ('%s') incurs huge slowdown on pod '%s/%s' ('%s')",
-				nodeName, pod.Namespace, pod.Name, pod.Labels[greedyquadLabelKey], occ.Namespace, occ.Name, occ.Labels[greedyquadLabelKey])
+				nodeName, pod.Namespace, pod.Name, pod.Labels[greedyquadLabelKey],)
 			klog.V(2).Infof(msg)
 			return framework.NewStatus(framework.Unschedulable, msg)
 		}
