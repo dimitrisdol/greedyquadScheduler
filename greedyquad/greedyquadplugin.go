@@ -197,7 +197,7 @@ func (ap *GreedyQuadPlugin) Filter(
 	// If more than 2 occupants are found to be already scheduled on the
 	// Node at hand, we must have fucked up earlier; report the error.
 	default:
-		klog.Errorf("detected %d occupant Pods tracked by ActiPlugin on Node %q", len(occupants), nodeName)
+		klog.Errorf("detected %d occupant Pods tracked by GreedyQuadPlugin on Node %q", len(occupants), nodeName)
 		return framework.NewStatus(framework.Error, fmt.Sprintf("found %d occupants on '%s' already", len(occupants), nodeName))
 	}
 }
