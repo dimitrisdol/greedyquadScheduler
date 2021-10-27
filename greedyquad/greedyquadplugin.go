@@ -116,12 +116,12 @@ func (ap *GreedyQuadPlugin) Filter(
 	// If the Node is full (i.e., 4 applications tracked by GreedyQuadPlugin are
 	// already scheduled on it), filter it out.
 	case 4:
-		score := 40
+		score := 65
 		if score > sla {
 			klog.V(2).Infof("filtering Node %q out because 4 GreedyQuadPlugin applications are already scheduled there", nodeName)
 		return framework.NewStatus(framework.Unschedulable, fmt.Sprintf("Node '%s' already has 2 GreedyQuadPlugin occupants", nodeName))
 		}
-		fallthrough
+		
 	// If the existing occupant is slowed down prohibitively much by the
 	// new Pod's attack, filter the Node out.
 	// Now cheking the cases of 1, 2 and 3 pods already being in the Node.
@@ -223,6 +223,13 @@ func (ap *GreedyQuadPlugin) Score(
 	nodeInfo, err := ap.handle.SnapshotSharedLister().NodeInfos().Get(nodeName)
 	if err != nil {
 		return -1, framework.NewStatus(framework.Error, fmt.Sprintf("failed to get Node '%s' from snapshot: %v", nodeName, err))
+	}
+	
+	// If the given Pod does not have the greedyquadLabelKey, approve it and let
+	// the other plugins decide for its fate.
+	if _, exists := pod.Labels[greedyquadLabelKey]; !exists {
+		klog.V(2).Infof("blindly scoring Pod '%s/%s' as it does not have GreedyQuadPlugin's label %q", pod.Namespace, pod.Name, greedyquadLabelKey)
+		return 0, framework.NewStatus(framework.Success, fmt.Sprintf("Node '%s' is empty: interim score = 0", nodeName))
 	}
 
 	occupants := ap.findCurrentOccupants(nodeInfo)
