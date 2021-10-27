@@ -23,7 +23,7 @@ const (
 
 	// greedyquadLabelKey is the key of the Kubernetes Label which every
 	// application that needs to be tracked by GreedyQuadPlugin should have.
-	greedyquadLabelKey = "category"
+	greedyquadLabelKey = "categ"
 )
 
 // GreedyQuadPlugin is an out-of-tree plugin for the kube-scheduler, which takes into

@@ -39,9 +39,9 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: {{ .Name }}
-  namespace: default
+  namespace: cpuman
   labels:
-    category: cat{{ .Category }}
+    categ: cat{{ .Category }}
 spec:
   schedulerName: default-scheduler
   containers:
