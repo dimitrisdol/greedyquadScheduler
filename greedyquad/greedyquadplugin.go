@@ -266,6 +266,7 @@ func (ap *GreedyQuadPlugin) Score(
 	return score, framework.NewStatus(framework.Success, fmt.Sprintf("Node '%s': interim score = %d", nodeName, score))
 	}
 	//3 occupants now
+	if len(occupants) == 3{
 	occ1 := occupants[0]
 	occ2 := occupants[1]
 	occ3 := occupants[2]
@@ -288,6 +289,11 @@ func (ap *GreedyQuadPlugin) Score(
 		return -1, framework.NewStatus(framework.Error, err3.Error())
 	}
 	scoreFp := scoreFp1 + scoreFp2 + scoreFp3
+	score := int64(ap.model.ToInt64Multiplier() * scoreFp)
+	return score, framework.NewStatus(framework.Success, fmt.Sprintf("Node '%s': interim score = %d", nodeName, score))
+	}
+	// if 4+ pods
+	scoreFp := 40
 	score := int64(ap.model.ToInt64Multiplier() * scoreFp)
 	return score, framework.NewStatus(framework.Success, fmt.Sprintf("Node '%s': interim score = %d", nodeName, score))
 	
