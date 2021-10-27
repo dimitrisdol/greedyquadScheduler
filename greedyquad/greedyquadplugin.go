@@ -293,7 +293,7 @@ func (ap *GreedyQuadPlugin) Score(
 	return score, framework.NewStatus(framework.Success, fmt.Sprintf("Node '%s': interim score = %d", nodeName, score))
 	}
 	// if 4+ pods
-	scoreFp := 40
+	scoreFp := 40.00
 	score := int64(ap.model.ToInt64Multiplier() * scoreFp)
 	return score, framework.NewStatus(framework.Success, fmt.Sprintf("Node '%s': interim score = %d", nodeName, score))
 	
