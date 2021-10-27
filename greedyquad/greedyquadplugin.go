@@ -116,9 +116,11 @@ func (ap *GreedyQuadPlugin) Filter(
 	// If the Node is full (i.e., 4 applications tracked by GreedyQuadPlugin are
 	// already scheduled on it), filter it out.
 	case 4:
-		klog.V(2).Infof("filtering Node %q out because 4 GreedyQuadPlugin applications are already scheduled there", nodeName)
-	//	return framework.NewStatus(framework.Unschedulable, fmt.Sprintf("Node '%s' already has 2 GreedyQuadPlugin occupants", nodeName))
-		score := 10
+		score := 20 
+		if score > sla {
+			klog.V(2).Infof("filtering Node %q out because 4 GreedyQuadPlugin applications are already scheduled there", nodeName)
+		return framework.NewStatus(framework.Unschedulable, fmt.Sprintf("Node '%s' already has 2 GreedyQuadPlugin occupants", nodeName))
+		}
 		fallthrough
 	// If the existing occupant is slowed down prohibitively much by the
 	// new Pod's attack, filter the Node out.
@@ -196,7 +198,7 @@ func (ap *GreedyQuadPlugin) Filter(
 	case 0:
 		klog.V(2).Infof("approving Node %q for pod '%s/%s'", nodeName, pod.Namespace, pod.Name)
 		return framework.NewStatus(framework.Success)
-	// If more than 4 occupants are found to be already scheduled on the
+	// If more than 2 occupants are found to be already scheduled on the
 	// Node at hand, we must have fucked up earlier; report the error.
 	default:
 		klog.Errorf("detected %d occupant Pods tracked by GreedyQuadPlugin on Node %q", len(occupants), nodeName)
