@@ -19,7 +19,7 @@ const (
 
 	// sla is the maximum slowdown that is allowed for an application when
 	// it is being scheduled along another one.
-	sla = 30
+	sla = 60
 
 	// greedyquadLabelKey is the key of the Kubernetes Label which every
 	// application that needs to be tracked by GreedyQuadPlugin should have.
@@ -116,7 +116,7 @@ func (ap *GreedyQuadPlugin) Filter(
 	// If the Node is full (i.e., 4 applications tracked by GreedyQuadPlugin are
 	// already scheduled on it), filter it out.
 	case 4:
-		score := 20 
+		score := 40
 		if score > sla {
 			klog.V(2).Infof("filtering Node %q out because 4 GreedyQuadPlugin applications are already scheduled there", nodeName)
 		return framework.NewStatus(framework.Unschedulable, fmt.Sprintf("Node '%s' already has 2 GreedyQuadPlugin occupants", nodeName))
