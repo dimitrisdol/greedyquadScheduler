@@ -41,7 +41,7 @@ metadata:
   name: {{ .Name }}
   namespace: cpuman
   labels:
-    categ: cat{{ .Category }}
+    category: cat{{ .Category }}
 spec:
   schedulerName: default-scheduler
   containers:

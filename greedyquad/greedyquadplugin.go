@@ -23,7 +23,7 @@ const (
 
 	// greedyquadLabelKey is the key of the Kubernetes Label which every
 	// application that needs to be tracked by GreedyQuadPlugin should have.
-	greedyquadLabelKey = "categ"
+	greedyquadLabelKey = "category"
 )
 
 // GreedyQuadPlugin is an out-of-tree plugin for the kube-scheduler, which takes into
@@ -116,11 +116,9 @@ func (ap *GreedyQuadPlugin) Filter(
 	// If the Node is full (i.e., 4 applications tracked by GreedyQuadPlugin are
 	// already scheduled on it), filter it out.
 	case 4:
-		//score := 65
-		//if score > sla {
 			klog.V(2).Infof("filtering Node %q out because 4 GreedyQuadPlugin applications are already scheduled there", nodeName)
 		return framework.NewStatus(framework.Unschedulable, fmt.Sprintf("Node '%s' already has 2 GreedyQuadPlugin occupants", nodeName))
-		//}
+		
 		
 	// If the existing occupant is slowed down prohibitively much by the
 	// new Pod's attack, filter the Node out.
@@ -273,7 +271,6 @@ func (ap *GreedyQuadPlugin) Score(
 	return score, framework.NewStatus(framework.Success, fmt.Sprintf("Node '%s': interim score = %d", nodeName, score))
 	}
 	//3 occupants now
-	if len(occupants) == 3{
 	occ1 := occupants[0]
 	occ2 := occupants[1]
 	occ3 := occupants[2]
@@ -296,11 +293,6 @@ func (ap *GreedyQuadPlugin) Score(
 		return -1, framework.NewStatus(framework.Error, err3.Error())
 	}
 	scoreFp := scoreFp1 + scoreFp2 + scoreFp3
-	score := int64(ap.model.ToInt64Multiplier() * scoreFp)
-	return score, framework.NewStatus(framework.Success, fmt.Sprintf("Node '%s': interim score = %d", nodeName, score))
-	}
-	// if 4+ pods
-	scoreFp := 40.00
 	score := int64(ap.model.ToInt64Multiplier() * scoreFp)
 	return score, framework.NewStatus(framework.Success, fmt.Sprintf("Node '%s': interim score = %d", nodeName, score))
 	
